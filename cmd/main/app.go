@@ -3,7 +3,10 @@ package main
 import (
 	"awesomeProject/internal/config"
 	"awesomeProject/internal/user"
+	"awesomeProject/internal/user/db"
+	"awesomeProject/pkg/client/mongodb"
 	"awesomeProject/pkg/logging"
+	"context"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"net"
@@ -20,6 +23,15 @@ func main() {
 	router := httprouter.New()
 
 	cfg := config.GetConfig()
+
+	cfgMongo := cfg.MongoDB
+	mongoDBClient, err := mongodb.NewClient(context.Background(), cfgMongo.Host, cfgMongo.Port,
+		cfgMongo.Username, cfgMongo.Password, cfgMongo.Database, cfgMongo.AuthDB)
+	if err != nil {
+		panic(err)
+	}
+	storage := db.NewStorage(mongoDBClient, cfg.MongoDB.Collection, logger)
+	//TODO: STORAGE TO SERVICE
 
 	logger.Info("register user handler")
 	handler := user.NewHandler(logger)
